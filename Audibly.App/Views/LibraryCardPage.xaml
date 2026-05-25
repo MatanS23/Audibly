@@ -234,6 +234,37 @@
                         </AppBarToggleButton.Icon>
                     </AppBarToggleButton>
 
+                    <!--  sort button  -->
+                    <AppBarButton
+                        Label="Sort"
+                        ToolTipService.ToolTip="Sort audiobooks"
+                        x:Name="SortButton">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8CB;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                                <ToggleMenuFlyoutItem
+                                    x:Name="SortTitleAscItem"
+                                    Click="SortTitleAsc_OnClick"
+                                    Text="Title A → Z" />
+                                <ToggleMenuFlyoutItem
+                                    x:Name="SortTitleDescItem"
+                                    Click="SortTitleDesc_OnClick"
+                                    Text="Title Z → A" />
+                                <MenuFlyoutSeparator />
+                                <ToggleMenuFlyoutItem
+                                    x:Name="SortAuthorAscItem"
+                                    Click="SortAuthorAsc_OnClick"
+                                    Text="Author A → Z" />
+                                <ToggleMenuFlyoutItem
+                                    x:Name="SortAuthorDescItem"
+                                    Click="SortAuthorDesc_OnClick"
+                                    Text="Author Z → A" />
+                            </MenuFlyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+
                     <!--  zoom drop down button  -->
                     <AppBarButton
                         Icon="Zoom"

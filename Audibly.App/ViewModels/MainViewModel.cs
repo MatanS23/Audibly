@@ -28,6 +28,17 @@ using WinRT.Interop;
 namespace Audibly.App.ViewModels;
 
 /// <summary>
+///     Sort options for the audiobook list.
+/// </summary>
+public enum SortOption
+{
+    TitleAsc,
+    TitleDesc,
+    AuthorAsc,
+    AuthorDesc
+}
+
+/// <summary>
 ///     Provides data and commands accessible to the entire app.
 /// </summary>
 public class MainViewModel : BindableBase
@@ -195,6 +206,47 @@ public class MainViewModel : BindableBase
 
     public bool IsListView => !_isGridView;
 
+    private SortOption _currentSort = Enum.TryParse<SortOption>(UserSettings.SortOption, out var savedSort)
+    ? savedSort
+    : SortOption.TitleAsc;
+
+    /// <summary>
+    ///     Gets or sets the current sort order for the audiobook library.
+    /// </summary>
+    public SortOption CurrentSort
+    {
+        get => _currentSort;
+        set
+        {
+            if (_currentSort == value) return;
+            _currentSort = value;
+            UserSettings.SortOption = value.ToString();
+            OnPropertyChanged();
+            ApplySortToAudiobooks();
+        }
+    }
+
+    /// <summary>
+    ///     Sorts the Audiobooks collection in-place according to CurrentSort.
+    /// </summary>
+    private void ApplySortToAudiobooks()
+    {
+        var sorted = _currentSort switch
+        {
+            SortOption.TitleAsc => Audiobooks.OrderBy(a => a.Title).ToList(),
+            SortOption.TitleDesc => Audiobooks.OrderByDescending(a => a.Title).ToList(),
+            SortOption.AuthorAsc => Audiobooks.OrderBy(a => a.Author).ThenBy(a => a.Title).ToList(),
+            SortOption.AuthorDesc => Audiobooks.OrderByDescending(a => a.Author).ThenByDescending(a => a.Title).ToList(),
+            _ => Audiobooks.OrderBy(a => a.Title).ToList()
+        };
+
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            Audiobooks.Clear();
+            foreach (var a in sorted) Audiobooks.Add(a);
+        });
+    }
+
     /// <summary>
     ///     Gets or sets a value indicating whether the app is currently importing audiobooks.
     /// </summary>
@@ -286,6 +338,18 @@ public class MainViewModel : BindableBase
                     Audiobooks.Add(audiobookViewModel);
                     AudiobooksForFilter.Add(audiobookViewModel);
                 }
+
+                // apply current sort
+                var sorted = _currentSort switch
+                {
+                    SortOption.TitleAsc => Audiobooks.OrderBy(a => a.Title).ToList(),
+                    SortOption.TitleDesc => Audiobooks.OrderByDescending(a => a.Title).ToList(),
+                    SortOption.AuthorAsc => Audiobooks.OrderBy(a => a.Author).ThenBy(a => a.Title).ToList(),
+                    SortOption.AuthorDesc => Audiobooks.OrderByDescending(a => a.Author).ThenByDescending(a => a.Title).ToList(),
+                    _ => Audiobooks.OrderBy(a => a.Title).ToList()
+                };
+                Audiobooks.Clear();
+                foreach (var a in sorted) Audiobooks.Add(a);
 
                 if (firstRun)
                 {

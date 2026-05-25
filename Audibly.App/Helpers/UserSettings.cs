@@ -227,4 +227,18 @@ public static class UserSettings
         }
         set => ApplicationData.Current.LocalSettings.Values["IsGridView"] = value;
     }
+
+
+    /// <summary>
+    ///     Sort the audiobook list by the specified option. Possible values: "TitleAsc", "TitleDesc", "AuthorAsc", "AuthorDesc", "DateAddedAsc", "DateAddedDesc".
+    /// </summary>
+    public static string SortOption
+    {
+        get
+        {
+            var sort = ApplicationData.Current.LocalSettings.Values["SortOption"]?.ToString();
+            return string.IsNullOrEmpty(sort) ? "TitleAsc" : sort;
+        }
+        set => ApplicationData.Current.LocalSettings.Values["SortOption"] = value;
+    }
 }
