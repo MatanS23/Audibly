@@ -201,4 +201,30 @@ public static class UserSettings
         set => ApplicationData.Current.LocalSettings.Values["WatchedFolderTokens"] =
             JsonSerializer.Serialize(value);
     }
+
+    /// <summary>
+    ///     Determines the last view mode (grid or list).
+    /// </summary>
+    public static bool IsGridView
+    {
+        get
+        {
+            try
+            {
+                var isGridView = ApplicationData.Current.LocalSettings.Values["IsGridView"];
+                if (isGridView != null)
+                    if (bool.TryParse(isGridView.ToString(), out var result))
+                        return result;
+
+                ApplicationData.Current.LocalSettings.Values["IsGridView"] = true;
+                return true;
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                return true;
+            }
+        }
+        set => ApplicationData.Current.LocalSettings.Values["IsGridView"] = value;
+    }
 }

@@ -76,6 +76,11 @@ public sealed partial class LibraryCardPage : Page
         SelectAllFiltersCheckBox.IsChecked = false;
     }
 
+    private void ViewToggleButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.IsGridView = !ViewModel.IsGridView;
+    }
+
     private async void LibraryCardPage_Loaded(object sender, RoutedEventArgs e)
     {
         // check if data migration already failed
