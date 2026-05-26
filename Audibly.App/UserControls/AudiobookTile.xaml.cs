@@ -96,7 +96,8 @@ public sealed partial class AudiobookTile : UserControl
         if (e is null) return;
         var myOption = new FlyoutShowOptions
         {
-            ShowMode = FlyoutShowMode.Transient
+            ShowMode = FlyoutShowMode.Transient,
+            Position = e.GetPosition(ButtonTile)
         };
         MenuFlyout.ShowAt(ButtonTile, myOption);
     }

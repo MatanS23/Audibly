@@ -81,7 +81,11 @@ public sealed partial class AudiobookListItem : UserControl
     private void ButtonTile_OnRightTapped(object sender, RightTappedRoutedEventArgs? e)
     {
         if (e is null) return;
-        var myOption = new FlyoutShowOptions { ShowMode = FlyoutShowMode.Transient };
+        var myOption = new FlyoutShowOptions
+        {
+            ShowMode = FlyoutShowMode.Transient,
+            Position = e.GetPosition(ButtonTile)
+        };
         MenuFlyout.ShowAt(ButtonTile, myOption);
     }
 

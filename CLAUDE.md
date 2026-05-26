@@ -172,6 +172,15 @@ Allow selecting multiple audiobooks in the library and deleting them all at once
 
 **AudiobookTile.xaml / AudiobookListItem.xaml** — added `IsHitTestVisible="{x:Bind ViewModel.IsNotSelectMode, Mode=OneWay}"` to `ButtonTile` so pointer events pass through to the `GridViewItem`/`ListViewItem` container for selection when in select mode.
 
+### ✅ Bug fix — Context menu opens at click position
+The right-click context menu was always anchored to the right edge of the entry tile/row (`Placement="RightEdgeAlignedTop"` on the element), which looked especially poor in list view.
+
+**Files:** `AudiobookTile.xaml.cs`, `AudiobookListItem.xaml.cs`
+
+**Fix:** In both `ButtonTile_OnRightTapped` handlers, added `Position = e.GetPosition(ButtonTile)` to the `FlyoutShowOptions`. This overrides the element-anchored placement and opens the menu at the exact pointer position instead.
+
+---
+
 ### 🔲 Step 6 — Author sidebar
 Dynamically list all authors in the left navigation pane under "Library". Clicking an author filters the main library to show only their books.
 
