@@ -271,7 +271,17 @@ public class AudiobookViewModel : BindableBase
     /// <summary>
     ///     Gets or sets the author of the audiobook.
     /// </summary>
-    public string Author => Model.Author;
+    public string Author
+    {
+        get => Model.Author;
+        set
+        {
+            if (value == Model.Author) return;
+            Model.Author = value;
+            IsModified = true;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     ///     Gets or sets the composer of the audiobook
@@ -305,9 +315,19 @@ public class AudiobookViewModel : BindableBase
         Model.ThumbnailPath.Equals(string.Empty) ? Model.CoverImagePath : Model.ThumbnailPath;
 
     /// <summary>
-    ///     Gets the title of the audiobook.
+    ///     Gets or sets the title of the audiobook.
     /// </summary>
-    public string Title => Model.Title;
+    public string Title
+    {
+        get => Model.Title;
+        set
+        {
+            if (value == Model.Title) return;
+            Model.Title = value;
+            IsModified = true;
+            OnPropertyChanged();
+        }
+    }
 
     /// <summary>
     ///     Gets or sets the release date of the audiobook.

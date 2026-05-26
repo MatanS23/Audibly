@@ -199,16 +199,20 @@ Dynamically list all authors in the left navigation pane under "Library". Clicki
 - `RebuildAuthorNavItems()` — clears `LibraryCardMenuItem.MenuItems` and repopulates with an "All Books" item (tag `__all__`, library glyph) followed by one `NavigationViewItem` per author (tag `__author__{name}`, person glyph). Sets `LibraryCardMenuItem.IsExpanded = true`. Called from `ViewModel.Authors.CollectionChanged`.
 - `NavigationView_ItemInvoked` updated: clicking Library or "All Books" clears `ActiveAuthorFilter`; clicking an `__author__` item sets it; navigates to `LibraryCardPage` if not already there.
 
-### 🔲 Step 7 — Metadata editing (Title and Author)
+### ✅ Step 7 — Metadata editing (Title and Author)
 Allow the user to edit the `Title` and `Author` fields of an existing audiobook entry directly in the app, so books can be renamed for correct sorting without touching the database manually.
 
-**Plan:**
-- The existing "More Info" dialog (`MoreInfo_OnClick` in `AudiobookTile.xaml.cs` and `AudiobookListItem.xaml.cs`) is the natural place to add an edit mode. Find its content dialog in `Audibly.App/Views/ContentDialogs/`.
-- Add editable `TextBox` fields for `Title` and `Author` to the More Info dialog, replacing or toggling with the current read-only display.
-- On confirm, update `AudiobookViewModel.Model.Title` / `.Author`, set `IsModified = true`, and call `SaveAsync()` which internally calls `UpsertAsync(Model)` on the repository.
-- After saving, call `GetAudiobookListAsync()` on `MainViewModel` to refresh the library and re-apply the current sort.
-- No DB schema changes needed — `Title` and `Author` already exist on the `Audiobook` model.
-- Be aware: `UpsertAsync` uses `Title + Author` as the uniqueness key — there is a known bug comment (`// TODO: fix this bug`) around duplicate detection that may need attention when both fields change simultaneously.
+**Files:** `AudiobookViewModel.cs`, `MoreInfoDialogContent.xaml(.cs)`, `DialogService.cs`, `SqlAudiobookRepository.cs`
+
+**`SqlAudiobookRepository.cs`** — fixed `UpsertAsync` to look up by `Id` instead of `Title + Author`, so renaming a book doesn't break the upsert logic.
+
+**`AudiobookViewModel.cs`** — promoted `Title` and `Author` from read-only expression-body properties to writable properties with `IsModified = true` + `OnPropertyChanged()` on set.
+
+**`MoreInfoDialogContent.xaml`** — replaced the Title `TextBlock` (large, 24pt) and Author `TextBlock` with editable `TextBox` controls (`Header="Title"` / `Header="Author"`, `OneTime` binding for initial population, `x:Name="TitleTextBox"` / `x:Name="AuthorTextBox"`).
+
+**`MoreInfoDialogContent.xaml.cs`** — added `SaveChangesAsync()`: reads `TitleTextBox.Text` and `AuthorTextBox.Text`, updates ViewModel properties if changed, calls `SaveAsync()`, then calls `App.ViewModel.GetAudiobookListAsync()` to refresh the library.
+
+**`DialogService.cs`** — updated `ShowMoreInfoDialogAsync` to add `PrimaryButtonText = "Save"` and `DefaultButton = ContentDialogButton.Primary`. Awaits the dialog result and calls `moreInfoDialog.SaveChangesAsync()` if `ContentDialogResult.Primary`.
 
 ### 🔲 Step 8 — Chapter time display toggle (elapsed ↔ remaining)
 The right-side time label at the end of the player progress bar currently always shows total chapter duration. Make it clickable to toggle between total duration and time remaining in the current chapter.
