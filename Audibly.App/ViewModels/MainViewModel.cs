@@ -46,6 +46,7 @@ public class MainViewModel : BindableBase
     #region Delegates
 
     public delegate void ResetFiltersHandler();
+    public delegate void AuthorFilterChangedHandler();
 
     #endregion
 
@@ -110,6 +111,29 @@ public class MainViewModel : BindableBase
     ///     The collection of audiobooks to be used for filtering.
     /// </summary>
     public List<AudiobookViewModel> AudiobooksForFilter { get; } = [];
+
+    /// <summary>
+    ///     Distinct sorted author names derived from the library; drives the author sidebar.
+    /// </summary>
+    public ObservableCollection<string> Authors { get; } = [];
+
+    private string? _activeAuthorFilter;
+
+    /// <summary>
+    ///     When set, the library is filtered to show only books by this author.
+    ///     Setting to null restores all books.
+    /// </summary>
+    public string? ActiveAuthorFilter
+    {
+        get => _activeAuthorFilter;
+        set
+        {
+            if (_activeAuthorFilter == value) return;
+            _activeAuthorFilter = value;
+            OnPropertyChanged();
+            AuthorFilterChanged?.Invoke();
+        }
+    }
 
     /// <summary>
     ///     Gets or sets the selected audiobook, or null if no audiobook is selected.
@@ -401,6 +425,11 @@ public class MainViewModel : BindableBase
     public event ResetFiltersHandler? ResetFilters;
 
     /// <summary>
+    ///     Invoked when <see cref="ActiveAuthorFilter" /> changes so the library page can re-apply its filters.
+    /// </summary>
+    public event AuthorFilterChangedHandler? AuthorFilterChanged;
+
+    /// <summary>
     ///     Gets the complete list of audiobooks from the database.
     /// </summary>
     public async Task GetAudiobookListAsync(bool firstRun = false)
@@ -436,6 +465,28 @@ public class MainViewModel : BindableBase
                 };
                 Audiobooks.Clear();
                 foreach (var a in sorted) Audiobooks.Add(a);
+
+                // rebuild the author sidebar list
+                var distinctAuthors = AudiobooksForFilter
+                    .Where(a => !string.IsNullOrWhiteSpace(a.Author))
+                    .Select(a => a.Author)
+                    .Distinct()
+                    .OrderBy(a => a)
+                    .ToList();
+                Authors.Clear();
+                foreach (var author in distinctAuthors) Authors.Add(author);
+
+                // if the active author no longer exists after reload, clear it silently
+                if (_activeAuthorFilter != null && !Authors.Contains(_activeAuthorFilter))
+                    _activeAuthorFilter = null;
+
+                // re-apply author filter on top of the full sorted list
+                if (_activeAuthorFilter != null)
+                {
+                    var authorFiltered = Audiobooks.Where(a => a.Author == _activeAuthorFilter).ToList();
+                    Audiobooks.Clear();
+                    foreach (var a in authorFiltered) Audiobooks.Add(a);
+                }
 
                 if (firstRun)
                 {

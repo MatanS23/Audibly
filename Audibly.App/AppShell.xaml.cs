@@ -1,5 +1,5 @@
 ﻿﻿// Author: rstewa · https://github.com/rstewa
-// Updated: 07/14/2025
+// Updated: 05/26/2026
 
 using System;
 using System.Collections.Generic;
@@ -67,6 +67,8 @@ public sealed partial class AppShell : Page
 
         NavView.PaneClosed += (_, _) => { UserSettings.IsSidebarCollapsed = true; };
         NavView.PaneOpened += (_, _) => { UserSettings.IsSidebarCollapsed = false; };
+
+        ViewModel.Authors.CollectionChanged += (_, _) => RebuildAuthorNavItems();
     }
 
     /// <summary>
@@ -132,6 +134,36 @@ public sealed partial class AppShell : Page
         ViewModel.OnNotificationClosed(notification);
     }
 
+    private const string AuthorTagPrefix = "__author__";
+    private const string AllBooksTag = "__all__";
+
+    /// <summary>
+    ///     Rebuilds the author sub-items under the Library nav item whenever the Authors collection changes.
+    /// </summary>
+    private void RebuildAuthorNavItems()
+    {
+        LibraryCardMenuItem.MenuItems.Clear();
+
+        if (ViewModel.Authors.Count == 0) return;
+
+        LibraryCardMenuItem.MenuItems.Add(new NavigationViewItem
+        {
+            Content = "All Books",
+            Tag = AllBooksTag,
+            Icon = new FontIcon { Glyph = "" }
+        });
+
+        foreach (var author in ViewModel.Authors)
+            LibraryCardMenuItem.MenuItems.Add(new NavigationViewItem
+            {
+                Content = author,
+                Tag = AuthorTagPrefix + author,
+                Icon = new FontIcon { Glyph = "" }
+            });
+
+        LibraryCardMenuItem.IsExpanded = true;
+    }
+
     /// <summary>
     ///     Navigates to the page corresponding to the tapped item.
     /// </summary>
@@ -139,13 +171,19 @@ public sealed partial class AppShell : Page
     {
         if (args.InvokedItemContainer is not NavigationViewItem item) return;
 
-        // check if the item is already the current page
-        // if (item == (NavigationViewItem)NavView.SelectedItem) return;
+        var tag = item.Tag?.ToString() ?? string.Empty;
 
-        if (item == LibraryCardMenuItem)
+        if (item == LibraryCardMenuItem || tag == AllBooksTag)
         {
+            ViewModel.ActiveAuthorFilter = null;
             if (AppAppShellFrame.Content is LibraryCardPage) return;
             AppAppShellFrame.Navigate(typeof(LibraryCardPage));
+        }
+        else if (tag.StartsWith(AuthorTagPrefix))
+        {
+            ViewModel.ActiveAuthorFilter = tag[AuthorTagPrefix.Length..];
+            if (AppAppShellFrame.Content is not LibraryCardPage)
+                AppAppShellFrame.Navigate(typeof(LibraryCardPage));
         }
         else if (item == NowPlayingMenuItem)
         {

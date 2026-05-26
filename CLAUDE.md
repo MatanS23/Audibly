@@ -181,15 +181,23 @@ The right-click context menu was always anchored to the right edge of the entry 
 
 ---
 
-### 🔲 Step 6 — Author sidebar
+### ✅ Step 6 — Author sidebar
 Dynamically list all authors in the left navigation pane under "Library". Clicking an author filters the main library to show only their books.
 
-**Plan:**
-- Add `ObservableCollection<string> Authors` to `MainViewModel`, populated from distinct non-empty `Author` values in `AudiobooksForFilter`. Refresh whenever `GetAudiobookListAsync` runs.
-- Add `string? ActiveAuthorFilter` property to `MainViewModel`. When set, filters `Audiobooks` to only that author. When null, shows all.
-- In `AppShell.xaml`, add author items under `LibraryCardMenuItem` in the `NavigationView.MenuItems` using an `ItemsRepeater` or by adding them as child `NavigationViewItem`s dynamically from code-behind.
-- In `AppShell.xaml.cs`, handle `NavigationView_ItemInvoked` to detect author item clicks and set `ViewModel.ActiveAuthorFilter`.
-- Filter must compose with existing progress filters and search — authors sidebar is an additional layer on top.
+**Files:** `MainViewModel.cs`, `LibraryCardPage.xaml.cs`, `AppShell.xaml.cs`
+
+**MainViewModel.cs** — added:
+- `ObservableCollection<string> Authors` — distinct, sorted author names; populated (and refreshed) inside `GetAudiobookListAsync` after `AudiobooksForFilter` is built.
+- `string? ActiveAuthorFilter` property — firing a new `AuthorFilterChanged` event on change. When `GetAudiobookListAsync` runs, if the active author no longer exists in the library, the filter is silently cleared. The full sorted list is then re-filtered in-place if an author is active.
+- `delegate AuthorFilterChangedHandler` / `event AuthorFilterChanged`.
+
+**LibraryCardPage.xaml.cs** — updated:
+- Subscribed to `ViewModel.AuthorFilterChanged` → `ViewModelOnAuthorFilterChanged`, which re-runs `FilterAudiobookList` (if progress filters are active) or `ResetAudiobookListAsync` (if not), so progress filters always compose on top of the author slice.
+- `GetFilteredAudiobooks()` and `ResetAudiobookListAsync()` — both now use `AudiobooksForFilter.Where(a.Author == ActiveAuthorFilter)` as their base when a filter is active instead of the full `AudiobooksForFilter`.
+
+**AppShell.xaml.cs** — added:
+- `RebuildAuthorNavItems()` — clears `LibraryCardMenuItem.MenuItems` and repopulates with an "All Books" item (tag `__all__`, library glyph) followed by one `NavigationViewItem` per author (tag `__author__{name}`, person glyph). Sets `LibraryCardMenuItem.IsExpanded = true`. Called from `ViewModel.Authors.CollectionChanged`.
+- `NavigationView_ItemInvoked` updated: clicking Library or "All Books" clears `ActiveAuthorFilter`; clicking an `__author__` item sets it; navigates to `LibraryCardPage` if not already there.
 
 ### 🔲 Step 7 — Metadata editing (Title and Author)
 Allow the user to edit the `Title` and `Author` fields of an existing audiobook entry directly in the app, so books can be renamed for correct sorting without touching the database manually.
