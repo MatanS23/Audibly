@@ -148,17 +148,29 @@ else
 
 ## Features remaining to implement
 
-### 🔲 Step 5 — Multi-select delete
+### ✅ Step 5 — Multi-select delete
 Allow selecting multiple audiobooks in the library and deleting them all at once.
 
-**Plan:**
-- Add a `bool IsSelectMode` property to `MainViewModel`.
-- Add a "Select" `AppBarToggleButton` to the command bar.
-- When active, switch both `GridView` and `ListView` to `SelectionMode="Multiple"`.
-- Show a "Delete Selected" `AppBarButton` only when `IsSelectMode` is true.
-- Wire up `SelectionChanged` on both views to track selected items.
-- Add `DeleteSelectedAudiobooksAsync()` to `MainViewModel` that deletes all selected items.
-- Note: `GridView`/`ListView` selection works with `AudiobookTile`/`AudiobookListItem` wrapping — need to ensure the inner `Button` doesn't swallow the selection tap. May need to disable pointer events on the inner button when in select mode.
+**Files:** `MainViewModel.cs`, `LibraryCardPage.xaml(.cs)`, `AudiobookTile.xaml`, `AudiobookListItem.xaml`
+
+**MainViewModel.cs** — added:
+- `IsSelectMode` / `IsNotSelectMode` / `HasSelectedAudiobooks` properties.
+- `SelectedAudiobooks` (`HashSet<Guid>`) to track selection.
+- `UpdateSelectedAudiobooks(added, removed)` — called from `SelectionChanged` handlers.
+- `DeleteSelectedAudiobooksAsync()` — shows a confirmation dialog, deletes all selected books, exits select mode, and refreshes the list.
+
+**LibraryCardPage.xaml** — added:
+- `AppBarToggleButton` (glyph `&#xE8B3;`) bound to `ViewModel.IsSelectMode`.
+- `AppBarButton` "Delete Selected" visible when `IsSelectMode`, enabled when `HasSelectedAudiobooks`.
+- `SelectionChanged` attribute on both `GridView` and `ListView`.
+
+**LibraryCardPage.xaml.cs** — added:
+- Subscribed to `ViewModel.PropertyChanged` to reset `SelectionMode` on both views when `IsSelectMode` becomes false (e.g. after delete completes).
+- `SelectModeToggle_OnClick` — toggles `IsSelectMode` and sets `SelectionMode.Multiple/None` on both views.
+- `LibraryCardScrollView_SelectionChanged` / `LibraryListView_SelectionChanged` — delegate to `ViewModel.UpdateSelectedAudiobooks`.
+- `DeleteSelectedButton_OnClick` — calls `ViewModel.DeleteSelectedAudiobooksAsync()`.
+
+**AudiobookTile.xaml / AudiobookListItem.xaml** — added `IsHitTestVisible="{x:Bind ViewModel.IsNotSelectMode, Mode=OneWay}"` to `ButtonTile` so pointer events pass through to the `GridViewItem`/`ListViewItem` container for selection when in select mode.
 
 ### 🔲 Step 6 — Author sidebar
 Dynamically list all authors in the left navigation pane under "Library". Clicking an author filters the main library to show only their books.

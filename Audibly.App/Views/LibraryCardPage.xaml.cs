@@ -1,8 +1,9 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 03/11/2025
+// Updated: 05/26/2026
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -56,9 +57,9 @@ public sealed partial class LibraryCardPage : Page
     {
         InitializeComponent();
 
-        // subscribe to page loaded event
         Loaded += LibraryCardPage_Loaded;
         ViewModel.ResetFilters += ViewModelOnResetFilters;
+        ViewModel.PropertyChanged += ViewModel_PropertyChanged;
     }
 
     /// <summary>
@@ -79,6 +80,43 @@ public sealed partial class LibraryCardPage : Page
     private void ViewToggleButton_OnClick(object sender, RoutedEventArgs e)
     {
         ViewModel.IsGridView = !ViewModel.IsGridView;
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainViewModel.IsSelectMode) || ViewModel.IsSelectMode) return;
+        LibraryCardScrollView.SelectionMode = ListViewSelectionMode.None;
+        LibraryListView.SelectionMode = ListViewSelectionMode.None;
+        LibraryCardScrollView.DeselectAll();
+        LibraryListView.DeselectAll();
+    }
+
+    private void SelectModeToggle_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.IsSelectMode = !ViewModel.IsSelectMode;
+        var mode = ViewModel.IsSelectMode ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
+        LibraryCardScrollView.SelectionMode = mode;
+        LibraryListView.SelectionMode = mode;
+        if (!ViewModel.IsSelectMode)
+        {
+            LibraryCardScrollView.DeselectAll();
+            LibraryListView.DeselectAll();
+        }
+    }
+
+    private void LibraryCardScrollView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ViewModel.UpdateSelectedAudiobooks(e.AddedItems, e.RemovedItems);
+    }
+
+    private void LibraryListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ViewModel.UpdateSelectedAudiobooks(e.AddedItems, e.RemovedItems);
+    }
+
+    private async void DeleteSelectedButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.DeleteSelectedAudiobooksAsync();
     }
 
     private async void LibraryCardPage_Loaded(object sender, RoutedEventArgs e)

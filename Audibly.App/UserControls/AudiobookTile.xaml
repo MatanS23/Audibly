@@ -66,6 +66,7 @@
         Background="Transparent"
         BorderBrush="Transparent"
         CornerRadius="8"
+        IsHitTestVisible="{x:Bind ViewModel.IsNotSelectMode, Mode=OneWay}"
         Padding="16"
         PointerEntered="AudiobookTile_OnPointerEntered"
         PointerExited="AudiobookTile_OnPointerExited"

@@ -61,6 +61,7 @@
         CornerRadius="8"
         HorizontalAlignment="Stretch"
         HorizontalContentAlignment="Stretch"
+        IsHitTestVisible="{x:Bind ViewModel.IsNotSelectMode, Mode=OneWay}"
         Padding="8,4"
         PointerEntered="AudiobookListItem_OnPointerEntered"
         PointerExited="AudiobookListItem_OnPointerExited"

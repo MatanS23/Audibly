@@ -282,6 +282,30 @@
                         </AppBarButton.Flyout>
                     </AppBarButton>
 
+                    <AppBarSeparator />
+
+                    <!--  select mode toggle  -->
+                    <AppBarToggleButton
+                        x:Name="SelectModeToggleButton"
+                        Click="SelectModeToggle_OnClick"
+                        IsChecked="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}"
+                        Label="Select"
+                        ToolTipService.ToolTip="Toggle multi-select mode">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8B3;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+
+                    <!--  delete selected button (visible in select mode)  -->
+                    <AppBarButton
+                        x:Name="DeleteSelectedButton"
+                        Click="DeleteSelectedButton_OnClick"
+                        Icon="Delete"
+                        IsEnabled="{x:Bind ViewModel.HasSelectedAudiobooks, Mode=OneWay}"
+                        Label="Delete Selected"
+                        ToolTipService.ToolTip="Delete selected audiobooks"
+                        Visibility="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}" />
+
                     <!--  region: debug menu  -->
                     <AppBarSeparator Visibility="{x:Bind ViewModel.ShowDebugMenu, Mode=OneWay}" x:Name="DebugMenuSeparator" />
 
@@ -395,6 +419,7 @@
             RelativePanel.AlignLeftWithPanel="True"
             RelativePanel.AlignRightWithPanel="True"
             RelativePanel.Below="TitleAndCommandBarPanel"
+            SelectionChanged="LibraryCardScrollView_SelectionChanged"
             SelectionMode="None"
             Visibility="{x:Bind ViewModel.IsGridView, Mode=OneWay}">
             <GridView.ItemContainerStyle>
@@ -422,6 +447,7 @@
             RelativePanel.AlignLeftWithPanel="True"
             RelativePanel.AlignRightWithPanel="True"
             RelativePanel.Below="TitleAndCommandBarPanel"
+            SelectionChanged="LibraryListView_SelectionChanged"
             SelectionMode="None"
             Visibility="{x:Bind ViewModel.IsListView, Mode=OneWay}" />
 
