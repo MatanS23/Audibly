@@ -60,6 +60,10 @@ public class PlayerViewModel : BindableBase, IDisposable
 
     private string _volumeLevelGlyph = Constants.VolumeGlyph3;
 
+    private bool _showChapterTimeRemaining = UserSettings.ShowChapterTimeRemaining;
+    private string _bookElapsedText = string.Empty;
+    private string _bookRemainingText = string.Empty;
+
     public PlayerViewModel()
     {
         InitializeAudioPlayer();
@@ -145,6 +149,8 @@ public class PlayerViewModel : BindableBase, IDisposable
         {
             Set(ref _chapterPositionMs, value);
             ChapterPositionText = _chapterPositionMs.ToStr_ms();
+            OnPropertyChanged(nameof(ChapterRemainingText));
+            OnPropertyChanged(nameof(ChapterTimeDisplayText));
         }
     }
 
@@ -158,7 +164,51 @@ public class PlayerViewModel : BindableBase, IDisposable
         {
             Set(ref _chapterDurationMs, value);
             ChapterDurationText = _chapterDurationMs.ToStr_ms();
+            OnPropertyChanged(nameof(ChapterRemainingText));
+            OnPropertyChanged(nameof(ChapterTimeDisplayText));
         }
+    }
+
+    /// <summary>
+    ///     Gets or sets whether the right-side chapter time label shows remaining time instead of total duration.
+    /// </summary>
+    public bool ShowChapterTimeRemaining
+    {
+        get => _showChapterTimeRemaining;
+        set
+        {
+            Set(ref _showChapterTimeRemaining, value);
+            UserSettings.ShowChapterTimeRemaining = value;
+            OnPropertyChanged(nameof(ChapterTimeDisplayText));
+        }
+    }
+
+    /// <summary>
+    ///     Gets the remaining time in the current chapter as a display string.
+    /// </summary>
+    public string ChapterRemainingText => $"-{(_chapterDurationMs - _chapterPositionMs).ToStr_ms()}";
+
+    /// <summary>
+    ///     Gets the chapter time label text — toggles between total duration and remaining.
+    /// </summary>
+    public string ChapterTimeDisplayText => ShowChapterTimeRemaining ? ChapterRemainingText : ChapterDurationText;
+
+    /// <summary>
+    ///     Gets or sets the total elapsed book time display string.
+    /// </summary>
+    public string BookElapsedText
+    {
+        get => _bookElapsedText;
+        set => Set(ref _bookElapsedText, value);
+    }
+
+    /// <summary>
+    ///     Gets or sets the speed-adjusted remaining book time display string.
+    /// </summary>
+    public string BookRemainingText
+    {
+        get => _bookRemainingText;
+        set => Set(ref _bookRemainingText, value);
     }
 
     /// <summary>
@@ -338,10 +388,28 @@ public class PlayerViewModel : BindableBase, IDisposable
         await NowPlaying.SaveAsync();
     }
 
+    private void UpdateBookTimeDisplays(double elapsedSeconds)
+    {
+        if (NowPlaying == null) return;
+        BookElapsedText = ((long)(elapsedSeconds * 1000)).ToStr_ms();
+        var remainingSeconds = (NowPlaying.Duration - elapsedSeconds) / PlaybackSpeed;
+        BookRemainingText = remainingSeconds > 0 ? $"-{((long)(remainingSeconds * 1000)).ToStr_ms()}" : string.Empty;
+    }
+
     public async void UpdatePlaybackSpeed(double speed)
     {
         PlaybackSpeed = speed;
         MediaPlayer.PlaybackRate = speed;
+
+        if (NowPlaying != null)
+        {
+            double elapsed = 0;
+            if (NowPlaying.CurrentSourceFileIndex != 0)
+                for (var i = 0; i < NowPlaying.CurrentSourceFileIndex; i++)
+                    elapsed += NowPlaying.SourcePaths[i].Duration;
+            elapsed += CurrentPosition.TotalSeconds;
+            UpdateBookTimeDisplays(elapsed);
+        }
 
         // save playback speed for audiobook
         if (NowPlaying == null) return;
@@ -581,6 +649,7 @@ public class PlayerViewModel : BindableBase, IDisposable
             tmp += CurrentPosition.TotalSeconds;
             NowPlaying.Progress = Math.Ceiling(tmp / NowPlaying.Duration * 100);
             NowPlaying.IsCompleted = NowPlaying.Progress >= 99.9;
+            UpdateBookTimeDisplays(tmp);
         });
 
         await NowPlaying.SaveAsync();

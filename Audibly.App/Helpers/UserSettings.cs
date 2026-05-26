@@ -230,6 +230,32 @@ public static class UserSettings
 
 
     /// <summary>
+    ///     Whether the chapter time label shows remaining time (true) or total duration (false).
+    /// </summary>
+    public static bool ShowChapterTimeRemaining
+    {
+        get
+        {
+            try
+            {
+                var val = ApplicationData.Current.LocalSettings.Values["ShowChapterTimeRemaining"];
+                if (val != null)
+                    if (bool.TryParse(val.ToString(), out var result))
+                        return result;
+
+                ApplicationData.Current.LocalSettings.Values["ShowChapterTimeRemaining"] = false;
+                return false;
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                return false;
+            }
+        }
+        set => ApplicationData.Current.LocalSettings.Values["ShowChapterTimeRemaining"] = value;
+    }
+
+    /// <summary>
     ///     Sort the audiobook list by the specified option. Possible values: "TitleAsc", "TitleDesc", "AuthorAsc", "AuthorDesc", "DateAddedAsc", "DateAddedDesc".
     /// </summary>
     public static string SortOption

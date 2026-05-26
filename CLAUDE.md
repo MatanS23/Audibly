@@ -214,33 +214,35 @@ Allow the user to edit the `Title` and `Author` fields of an existing audiobook 
 
 **`DialogService.cs`** — updated `ShowMoreInfoDialogAsync` to add `PrimaryButtonText = "Save"` and `DefaultButton = ContentDialogButton.Primary`. Awaits the dialog result and calls `moreInfoDialog.SaveChangesAsync()` if `ContentDialogResult.Primary`.
 
-### 🔲 Step 8 — Chapter time display toggle (elapsed ↔ remaining)
-The right-side time label at the end of the player progress bar currently always shows total chapter duration. Make it clickable to toggle between total duration and time remaining in the current chapter.
+### ✅ Step 8 — Chapter time display toggle (elapsed ↔ remaining)
+The right-side time label at the end of the player progress bar was a static TextBlock showing total chapter duration. It is now a transparent `Button` that toggles between total duration and time remaining in the chapter on each click.
 
-**Plan:**
-- **`PlayerViewModel.cs`** — add:
-  - `bool ShowChapterTimeRemaining` property.
-  - `string ChapterRemainingText` computed property: `((long)(_chapterDurationMs - _chapterPositionMs)).ToStr_ms()`.
-  - In the `ChapterPositionMs` setter, add `OnPropertyChanged(nameof(ChapterRemainingText))` so it updates live.
-- **`NowPlayingBar.xaml`** — replace the right-side `TextBlock` (currently `RemainingTimeTextBlock`, bound to `ChapterDurationText`) with a `Button` styled as a label (transparent background, no border). Its inner `TextBlock` uses a conditional x:Bind:
-  ```xml
-  Text="{x:Bind PlayerViewModel.ShowChapterTimeRemaining ? PlayerViewModel.ChapterRemainingText : PlayerViewModel.ChapterDurationText, Mode=OneWay}"
-  ```
-- **`NowPlayingBar.xaml.cs`** — add click handler that toggles `PlayerViewModel.ShowChapterTimeRemaining`.
+**Files:** `PlayerViewModel.cs`, `NowPlayingBar.xaml(.cs)`
 
-### 🔲 Step 9 — Book-level total progress and speed-adjusted remaining time
-Add a second row below the existing chapter progress bar showing total elapsed time and total remaining time for the whole audiobook. Only the remaining time is adjusted by playback speed.
+**`PlayerViewModel.cs`** — added:
+- `bool ShowChapterTimeRemaining` property (backing field `_showChapterTimeRemaining`).
+- `string ChapterRemainingText` computed property: `$"-{(_chapterDurationMs - _chapterPositionMs).ToStr_ms()}"`.
+- `OnPropertyChanged(nameof(ChapterRemainingText))` in both `ChapterPositionMs` and `ChapterDurationMs` setters so it stays live.
 
-**Plan:**
-- **`PlayerViewModel.cs`** — add:
-  - `string BookElapsedText` and `string BookRemainingText` properties.
-  - Private helper `UpdateBookTimeDisplays(double elapsedSeconds)` that calculates:
-    - `BookElapsedText` from elapsed seconds converted to ms via `.ToStr_ms()`.
-    - `BookRemainingText` from `(NowPlaying.Duration - elapsedSeconds) / PlaybackSpeed` — only remaining is speed-adjusted.
-  - Call `UpdateBookTimeDisplays(tmp)` at the end of the position block in `PlaybackSession_PositionChanged`, where `tmp` already holds total elapsed seconds across all source files.
-  - Also call it inside `UpdatePlaybackSpeed()` so remaining time recalculates immediately when speed changes.
-- **`NowPlayingBar.xaml`** — wrap the existing single-row Grid in a two-row parent Grid. Second row: three-column layout with `BookElapsedText` (left), static "Book Progress" label (center), `BookRemainingText` (right). Use smaller font size and lower opacity than the chapter row to visually distinguish the two levels.
-- No new `UserSettings` needed — these are ephemeral display values, not persisted.
+**`NowPlayingBar.xaml`** — replaced `RemainingTimeTextBlock` with a `Button` (transparent background/border, zero padding) containing a TextBlock bound to:
+```xml
+Text="{x:Bind PlayerViewModel.ShowChapterTimeRemaining ? PlayerViewModel.ChapterRemainingText : PlayerViewModel.ChapterDurationText, Mode=OneWay}"
+```
+
+**`NowPlayingBar.xaml.cs`** — added `ChapterTimeButton_Click` handler that flips `PlayerViewModel.ShowChapterTimeRemaining`.
+
+### ✅ Step 9 — Book-level total progress and speed-adjusted remaining time
+A second row was added below the chapter progress bar showing total elapsed time (left), a "Book Progress" label (center), and speed-adjusted remaining time (right) at smaller font/opacity.
+
+**Files:** `PlayerViewModel.cs`, `NowPlayingBar.xaml`
+
+**`PlayerViewModel.cs`** — added:
+- `string BookElapsedText` and `string BookRemainingText` properties (backing fields).
+- `UpdateBookTimeDisplays(double elapsedSeconds)`: sets `BookElapsedText` from elapsed ms and `BookRemainingText` from `(Duration - elapsed) / PlaybackSpeed`, prefixed with `"-"`.
+- Called at the end of the `PlaybackSession_PositionChanged` dispatcher block (where `tmp` holds total elapsed seconds).
+- Called inside `UpdatePlaybackSpeed()` (with a recalculated `elapsed` sum) so remaining time refreshes immediately on speed change.
+
+**`NowPlayingBar.xaml`** — added `RowDefinitions` (2 rows) to the existing Grid. Existing chapter-row items gained `Grid.Row="0"`. Three TextBlocks added in `Grid.Row="1"` at `FontSize="12"` and `Opacity="0.6"` for the book-level display.
 
 ---
 

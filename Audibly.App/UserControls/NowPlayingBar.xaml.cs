@@ -1,5 +1,5 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 01/26/2025
+// Updated: 05/26/2026
 
 using System;
 using Audibly.App.ViewModels;
@@ -55,5 +55,10 @@ public sealed partial class NowPlayingBar : UserControl
         {
             await PlayerViewModel.SeekToPositionAsync(e.NewValue);
         }
+    }
+
+    private void ChapterTimeButton_Click(object sender, RoutedEventArgs e)
+    {
+        PlayerViewModel.ShowChapterTimeRemaining = !PlayerViewModel.ShowChapterTimeRemaining;
     }
 }
