@@ -244,6 +244,42 @@ A second row was added below the chapter progress bar showing total elapsed time
 
 **`NowPlayingBar.xaml`** — added `RowDefinitions` (2 rows) to the existing Grid. Existing chapter-row items gained `Grid.Row="0"`. Three TextBlocks added in `Grid.Row="1"` at `FontSize="12"` and `Opacity="0.6"` for the book-level display.
 
+### ✅ Bug fix — Author sidebar disappears after returning from maximized player
+Navigating to the maximized player (`PlayerPage`) via `App.RootFrame?.Navigate(typeof(PlayerPage))` replaces `AppShell` in the root frame. Returning via `Frame.GoBack()` creates a new `AppShell` instance (default `NavigationCacheMode.Disabled`). The new instance subscribes to `Authors.CollectionChanged` but never calls `RebuildAuthorNavItems()` — the collection is already populated and won't fire `CollectionChanged` again.
+
+**File:** `AppShell.xaml.cs`
+
+**Fix:** Call `RebuildAuthorNavItems()` immediately after subscribing to `CollectionChanged`, so any already-populated Authors list is used to build the nav items on construction.
+
+---
+
+### ✅ Step 10 — Persist author filter, progress filters, and filter button appearance
+
+#### Author sidebar selection persists across app restarts and player navigation
+**Files:** `UserSettings.cs`, `MainViewModel.cs`, `AppShell.xaml.cs`
+
+**`UserSettings.cs`** — added `ActiveAuthorFilter` (nullable string, persisted as empty string for null) and `ActiveFilters` (comma-separated string of active progress filter names, e.g. `"InProgress,Completed"`).
+
+**`MainViewModel.cs`** — `_activeAuthorFilter` initialized from `UserSettings.ActiveAuthorFilter`. `ActiveAuthorFilter` setter saves to `UserSettings`. When `GetAudiobookListAsync` silently clears a stale author filter, it now uses the property setter (so UserSettings is cleared too). `GetAudiobookListAsync` also re-applies saved progress filters from `UserSettings.ActiveFilters` as the final step after reload, so Refresh preserves all active filters.
+
+**Removed `ResetFilters?.Invoke()`** from `GetAudiobookListAsync` — the Refresh button no longer wipes filter state.
+
+**`AppShell.xaml.cs`** — `RebuildAuthorNavItems()` now sets `NavView.SelectedItem` to the matching author nav item after rebuilding, restoring the sidebar highlight when returning from the player or on app launch with a saved author filter.
+
+#### Progress filters (In Progress / Not Started / Completed) persist across app restarts and player navigation
+**File:** `LibraryCardPage.xaml.cs`
+
+- Added `_restoringFilters` flag. When `true`, the checkbox `Checked`/`Unchecked` handlers return early, preventing double-filtering during UI state restore.
+- Added `RestoreFiltersFromSettings()` — called from `LibraryCardPage_Loaded`, reads `UserSettings.ActiveFilters`, populates `_activeFilters`, sets checkbox states under `_restoringFilters = true`, then calls `SetCheckedState()` to update the button appearance.
+- Added `SaveActiveFilters()` — writes `_activeFilters` to `UserSettings.ActiveFilters`. Called from every check/uncheck handler.
+- `ResetAudiobookListAsync` clears `UserSettings.ActiveFilters` when all filters are removed.
+- **Fixed control flow bug in `LibraryCardPage_Loaded`:** The previous `if (!NeedToImportAudiblyExport) return` was short-circuiting `UpdateSortCheckmarks()` and the new `RestoreFiltersFromSettings()` on every normal app launch. Restructured to `if/else if` so both methods always run at the end.
+
+#### Filter button styled like AppBarToggleButton when active
+**File:** `LibraryCardPage.xaml.cs`
+
+`SetCheckedState()` now sets `FilterButton.Background = SystemAccentColor` and `FilterButton.Foreground = TextOnAccentFillColorPrimaryBrush` when any filter is active, matching the checked appearance of `AppBarToggleButton`. When no filters are active, `Background` is set to `Transparent` and foreground is cleared to its default.
+
 ---
 
 ## Key patterns in this codebase

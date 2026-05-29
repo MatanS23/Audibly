@@ -117,11 +117,11 @@ public class MainViewModel : BindableBase
     /// </summary>
     public ObservableCollection<string> Authors { get; } = [];
 
-    private string? _activeAuthorFilter;
+    private string? _activeAuthorFilter = UserSettings.ActiveAuthorFilter;
 
     /// <summary>
     ///     When set, the library is filtered to show only books by this author.
-    ///     Setting to null restores all books.
+    ///     Setting to null restores all books. Persisted across sessions.
     /// </summary>
     public string? ActiveAuthorFilter
     {
@@ -130,6 +130,7 @@ public class MainViewModel : BindableBase
         {
             if (_activeAuthorFilter == value) return;
             _activeAuthorFilter = value;
+            UserSettings.ActiveAuthorFilter = value;
             OnPropertyChanged();
             AuthorFilterChanged?.Invoke();
         }
@@ -436,8 +437,6 @@ public class MainViewModel : BindableBase
     {
         try
         {
-            ResetFilters?.Invoke();
-
             await _dispatcherQueue.EnqueueAsync(() => IsLoading = true);
 
             var audiobooks = (await App.Repository.Audiobooks.GetAsync()).AsList();
@@ -478,7 +477,7 @@ public class MainViewModel : BindableBase
 
                 // if the active author no longer exists after reload, clear it silently
                 if (_activeAuthorFilter != null && !Authors.Contains(_activeAuthorFilter))
-                    _activeAuthorFilter = null;
+                    ActiveAuthorFilter = null;
 
                 // re-apply author filter on top of the full sorted list
                 if (_activeAuthorFilter != null)
@@ -509,6 +508,20 @@ public class MainViewModel : BindableBase
                             // Handle the exception
                             LoggingService.LogError(t.Exception, true);
                     }, TaskContinuationOptions.OnlyOnFaulted);
+                }
+
+                // re-apply saved progress filters (preserves filter state through refresh/reload)
+                var savedFilters = UserSettings.ActiveFilters;
+                if (!string.IsNullOrEmpty(savedFilters))
+                {
+                    var filterNames = new HashSet<string>(savedFilters.Split(','));
+                    var filtered = Audiobooks.Where(a =>
+                        (filterNames.Contains("InProgress") && a.Progress > 0 && !a.IsCompleted) ||
+                        (filterNames.Contains("NotStarted") && a.Progress == 0 && !a.IsCompleted) ||
+                        (filterNames.Contains("Completed") && a.IsCompleted)
+                    ).ToList();
+                    Audiobooks.Clear();
+                    foreach (var a in filtered) Audiobooks.Add(a);
                 }
 
                 IsLoading = false;

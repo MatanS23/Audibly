@@ -53,6 +53,7 @@ public sealed partial class LibraryCardPage : Page
 
     private readonly HashSet<AudioBookFilter> _activeFilters = new();
     private readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+    private bool _restoringFilters;
 
     public LibraryCardPage()
     {
@@ -139,35 +140,34 @@ public sealed partial class LibraryCardPage : Page
 
             UserSettings.NeedToImportAudiblyExport = false;
             UserSettings.ShowDataMigrationFailedDialog = false;
-
-            return;
         }
-
-        // check if we need to import the user's data from the old database
-        if (!UserSettings.NeedToImportAudiblyExport) return;
-
-        // let the user know that we need to migrate their data into the new database
-        // todo: probably do not need this try/catch block but leaving it here for now
-        try
+        else if (UserSettings.NeedToImportAudiblyExport)
         {
-            await DialogService.ShowDataMigrationRequiredDialogAsync();
-        }
-        catch (Exception exception)
-        {
-            UserSettings.NeedToImportAudiblyExport = false;
-            UserSettings.ShowDataMigrationFailedDialog = false;
-
-            // log the error
-            ViewModel.LoggingService.LogError(exception, true);
-
-            // notify user that we failed to import their audiobooks
-            ViewModel.EnqueueNotification(new Notification
+            // let the user know that we need to migrate their data into the new database
+            // todo: probably do not need this try/catch block but leaving it here for now
+            try
             {
-                Message = "Data Migration Failed",
-                Severity = InfoBarSeverity.Error
-            });
+                await DialogService.ShowDataMigrationRequiredDialogAsync();
+            }
+            catch (Exception exception)
+            {
+                UserSettings.NeedToImportAudiblyExport = false;
+                UserSettings.ShowDataMigrationFailedDialog = false;
+
+                // log the error
+                ViewModel.LoggingService.LogError(exception, true);
+
+                // notify user that we failed to import their audiobooks
+                ViewModel.EnqueueNotification(new Notification
+                {
+                    Message = "Data Migration Failed",
+                    Severity = InfoBarSeverity.Error
+                });
+            }
         }
+
         UpdateSortCheckmarks();
+        RestoreFiltersFromSettings();
     }
 
     /// <summary>
@@ -180,6 +180,44 @@ public sealed partial class LibraryCardPage : Page
         SortTitleDescItem.IsChecked = ViewModel.CurrentSort == SortOption.TitleDesc;
         SortAuthorAscItem.IsChecked = ViewModel.CurrentSort == SortOption.AuthorAsc;
         SortAuthorDescItem.IsChecked = ViewModel.CurrentSort == SortOption.AuthorDesc;
+    }
+
+    /// <summary>
+    ///     Restores progress filter checkboxes from UserSettings without re-triggering filter logic.
+    ///     Called on page load so state persists across navigation and app restarts.
+    /// </summary>
+    private void RestoreFiltersFromSettings()
+    {
+        var saved = UserSettings.ActiveFilters;
+        if (string.IsNullOrEmpty(saved)) return;
+
+        var names = new HashSet<string>(saved.Split(','));
+        _restoringFilters = true;
+        _activeFilters.Clear();
+
+        if (names.Contains("InProgress"))
+        {
+            _activeFilters.Add(AudioBookFilter.InProgress);
+            InProgressFilterCheckBox.IsChecked = true;
+        }
+        if (names.Contains("NotStarted"))
+        {
+            _activeFilters.Add(AudioBookFilter.NotStarted);
+            NotStartedFilterCheckBox.IsChecked = true;
+        }
+        if (names.Contains("Completed"))
+        {
+            _activeFilters.Add(AudioBookFilter.Completed);
+            CompletedFilterCheckBox.IsChecked = true;
+        }
+
+        _restoringFilters = false;
+        SetCheckedState();
+    }
+
+    private void SaveActiveFilters()
+    {
+        UserSettings.ActiveFilters = string.Join(",", _activeFilters.Select(f => f.ToString()));
     }
 
     private void SortTitleAsc_OnClick(object sender, RoutedEventArgs e)
@@ -218,6 +256,7 @@ public sealed partial class LibraryCardPage : Page
     public async Task ResetAudiobookListAsync()
     {
         _activeFilters.Clear();
+        UserSettings.ActiveFilters = string.Empty;
 
         // unchecked all the filter flyout items
         InProgressFilterCheckBox.IsChecked = false;
@@ -280,18 +319,18 @@ public sealed partial class LibraryCardPage : Page
         // need to perform a null check on any one of the controls.
         if (InProgressFilterCheckBox == null) return;
 
-        // check if any of the filters are checked and change the appbar button background color
+        // mirror AppBarToggleButton checked appearance when any filter is active
         if (InProgressFilterCheckBox.IsChecked == true ||
             NotStartedFilterCheckBox.IsChecked == true ||
             CompletedFilterCheckBox.IsChecked == true)
         {
-            FilterButton.BorderBrush = new SolidColorBrush((Color)Application.Current.Resources["SystemAccentColor"]);
-            FilterButton.BorderThickness = new Thickness(2);
+            FilterButton.Background = new SolidColorBrush((Color)Application.Current.Resources["SystemAccentColor"]);
+            FilterButton.Foreground = (Brush)Application.Current.Resources["TextOnAccentFillColorPrimaryBrush"];
         }
         else
         {
-            FilterButton.BorderBrush = new SolidColorBrush(Colors.Transparent);
-            FilterButton.BorderThickness = new Thickness(0);
+            FilterButton.Background = new SolidColorBrush(Colors.Transparent);
+            FilterButton.ClearValue(ForegroundProperty);
         }
 
         if (InProgressFilterCheckBox.IsChecked == true &&
@@ -309,55 +348,55 @@ public sealed partial class LibraryCardPage : Page
 
     private async void InProgressFilterCheckBox_OnChecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Add(AudioBookFilter.InProgress);
-
+        SaveActiveFilters();
         await FilterAudiobookList();
     }
 
     private async void NotStartedFilterCheckBox_OnChecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Add(AudioBookFilter.NotStarted);
-
+        SaveActiveFilters();
         await FilterAudiobookList();
     }
 
     private async void CompletedFilterCheckBox_OnChecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Add(AudioBookFilter.Completed);
-
+        SaveActiveFilters();
         await FilterAudiobookList();
     }
 
     private async void InProgressFilterCheckBox_OnUnchecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Remove(AudioBookFilter.InProgress);
-
+        SaveActiveFilters();
         await FilterAudiobookList();
     }
 
     private async void NotStartedFilterCheckBox_OnUnchecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Remove(AudioBookFilter.NotStarted);
-
+        SaveActiveFilters();
         await FilterAudiobookList();
     }
 
     private async void CompletedFilterCheckBox_OnUnchecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Remove(AudioBookFilter.Completed);
-
+        SaveActiveFilters();
         await FilterAudiobookList();
     }
 

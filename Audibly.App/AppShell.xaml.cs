@@ -69,6 +69,7 @@ public sealed partial class AppShell : Page
         NavView.PaneOpened += (_, _) => { UserSettings.IsSidebarCollapsed = false; };
 
         ViewModel.Authors.CollectionChanged += (_, _) => RebuildAuthorNavItems();
+        RebuildAuthorNavItems();
     }
 
     /// <summary>
@@ -162,6 +163,16 @@ public sealed partial class AppShell : Page
             });
 
         LibraryCardMenuItem.IsExpanded = true;
+
+        // restore sidebar selection for the active author filter
+        if (ViewModel.ActiveAuthorFilter != null)
+        {
+            var item = LibraryCardMenuItem.MenuItems
+                .OfType<NavigationViewItem>()
+                .FirstOrDefault(i => i.Tag?.ToString() == AuthorTagPrefix + ViewModel.ActiveAuthorFilter);
+            if (item != null)
+                NavView.SelectedItem = item;
+        }
     }
 
     /// <summary>

@@ -267,4 +267,26 @@ public static class UserSettings
         }
         set => ApplicationData.Current.LocalSettings.Values["SortOption"] = value;
     }
+
+    /// <summary>
+    ///     The author name currently selected in the sidebar filter, or null if "All Books" is active.
+    /// </summary>
+    public static string? ActiveAuthorFilter
+    {
+        get
+        {
+            var val = ApplicationData.Current.LocalSettings.Values["ActiveAuthorFilter"]?.ToString();
+            return string.IsNullOrEmpty(val) ? null : val;
+        }
+        set => ApplicationData.Current.LocalSettings.Values["ActiveAuthorFilter"] = value ?? string.Empty;
+    }
+
+    /// <summary>
+    ///     Comma-separated progress filter names currently active (e.g. "InProgress,Completed"). Empty string means no filters.
+    /// </summary>
+    public static string ActiveFilters
+    {
+        get => ApplicationData.Current.LocalSettings.Values["ActiveFilters"]?.ToString() ?? string.Empty;
+        set => ApplicationData.Current.LocalSettings.Values["ActiveFilters"] = value;
+    }
 }
