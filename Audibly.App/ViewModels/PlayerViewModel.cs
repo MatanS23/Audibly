@@ -394,8 +394,13 @@ public class PlayerViewModel : BindableBase, IDisposable
             else
             {
                 // use the audiobook's playback speed and volume level
-                UpdatePlaybackSpeed(NowPlaying.PlaybackSpeed);
-                UpdateVolume(NowPlaying.Volume);
+                // if they are set, otherwise fall back to the global settings (MatanS23)
+                UpdatePlaybackSpeed(NowPlaying.PlaybackSpeed > 0
+                    ? NowPlaying.PlaybackSpeed
+                    : UserSettings.PlaybackSpeed);
+                UpdateVolume(NowPlaying.Volume > 0
+                    ? NowPlaying.Volume
+                    : UserSettings.Volume);
             }
 
             NowPlaying.IsNowPlaying = true;
