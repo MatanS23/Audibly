@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 05/08/2025
+// Updated: 05/26/2026
+// Updated by: MatanS23
 
 using System;
 using System.Text.Json;
@@ -200,5 +201,18 @@ public static class UserSettings
         }
         set => ApplicationData.Current.LocalSettings.Values["WatchedFolderTokens"] =
             JsonSerializer.Serialize(value);
+    }
+
+    /// <summary>
+    ///     Sort the audiobook list by the specified option. Possible values: "TitleAsc", "TitleDesc", "AuthorAsc", "AuthorDesc".
+    /// </summary>
+    public static string SortOption
+    {
+        get
+        {
+            var sort = ApplicationData.Current.LocalSettings.Values["SortOption"]?.ToString();
+            return string.IsNullOrEmpty(sort) ? "TitleAsc" : sort;
+        }
+        set => ApplicationData.Current.LocalSettings.Values["SortOption"] = value;
     }
 }

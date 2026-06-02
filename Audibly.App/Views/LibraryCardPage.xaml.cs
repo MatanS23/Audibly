@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 03/11/2025
+// Updated: 05/26/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -114,6 +115,43 @@ public sealed partial class LibraryCardPage : Page
                 Severity = InfoBarSeverity.Error
             });
         }
+        UpdateSortCheckmarks();
+    }
+
+    /// <summary>
+    ///     Handles the update of sort checkmarks.
+    /// </summary>
+
+    private void UpdateSortCheckmarks()
+    {
+        SortTitleAscItem.IsChecked = ViewModel.CurrentSort == SortOption.TitleAsc;
+        SortTitleDescItem.IsChecked = ViewModel.CurrentSort == SortOption.TitleDesc;
+        SortAuthorAscItem.IsChecked = ViewModel.CurrentSort == SortOption.AuthorAsc;
+        SortAuthorDescItem.IsChecked = ViewModel.CurrentSort == SortOption.AuthorDesc;
+    }
+
+    private void SortTitleAsc_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CurrentSort = SortOption.TitleAsc;
+        UpdateSortCheckmarks();
+    }
+
+    private void SortTitleDesc_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CurrentSort = SortOption.TitleDesc;
+        UpdateSortCheckmarks();
+    }
+
+    private void SortAuthorAsc_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CurrentSort = SortOption.AuthorAsc;
+        UpdateSortCheckmarks();
+    }
+
+    private void SortAuthorDesc_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CurrentSort = SortOption.AuthorDesc;
+        UpdateSortCheckmarks();
     }
 
     private async void RefreshButton_OnClick(object sender, RoutedEventArgs e)
