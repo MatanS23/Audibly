@@ -1,10 +1,12 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 03/11/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.UI;
@@ -59,6 +61,7 @@ public sealed partial class LibraryCardPage : Page
         // subscribe to page loaded event
         Loaded += LibraryCardPage_Loaded;
         ViewModel.ResetFilters += ViewModelOnResetFilters;
+        ViewModel.AuthorFilterChanged += ViewModelOnAuthorFilterChanged;
     }
 
     /// <summary>
@@ -76,6 +79,13 @@ public sealed partial class LibraryCardPage : Page
         SelectAllFiltersCheckBox.IsChecked = false;
     }
 
+    private async void ViewModelOnAuthorFilterChanged()
+    {
+        if (_activeFilters.Count > 0)
+            await FilterAudiobookList();
+        else
+            await ResetAudiobookListAsync();
+    }
     private async void LibraryCardPage_Loaded(object sender, RoutedEventArgs e)
     {
         // check if data migration already failed
@@ -122,7 +132,7 @@ public sealed partial class LibraryCardPage : Page
     }
 
     /// <summary>
-    ///     Resets the audiobook list.
+    ///     Resets the audiobook list, respecting any active author filter.
     /// </summary>
     public async Task ResetAudiobookListAsync()
     {
@@ -136,16 +146,21 @@ public sealed partial class LibraryCardPage : Page
         await _dispatcherQueue.EnqueueAsync(() =>
         {
             ViewModel.Audiobooks.Clear();
-            foreach (var a in ViewModel.AudiobooksForFilter) ViewModel.Audiobooks.Add(a);
+            var source = ViewModel.ActiveAuthorFilter != null
+                ? ViewModel.AudiobooksForFilter.Where(a => a.Author == ViewModel.ActiveAuthorFilter)
+                : (IEnumerable<AudiobookViewModel>)ViewModel.AudiobooksForFilter;
+            foreach (var a in source) ViewModel.Audiobooks.Add(a);
         });
     }
 
     private HashSet<AudiobookViewModel> GetFilteredAudiobooks()
     {
-        // matches audiobooks for each active filter
-        var matches = new HashSet<AudiobookViewModel>();
+        var source = ViewModel.ActiveAuthorFilter != null
+            ? ViewModel.AudiobooksForFilter.Where(a => a.Author == ViewModel.ActiveAuthorFilter)
+            : (IEnumerable<AudiobookViewModel>)ViewModel.AudiobooksForFilter;
 
-        foreach (var audiobook in ViewModel.AudiobooksForFilter)
+        var matches = new HashSet<AudiobookViewModel>();
+        foreach (var audiobook in source)
         {
             if (_activeFilters.Contains(AudioBookFilter.InProgress) && audiobook.Progress > 0 && !audiobook.IsCompleted)
                 matches.Add(audiobook);
