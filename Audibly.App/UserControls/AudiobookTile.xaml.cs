@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 06/09/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -96,7 +97,8 @@ public sealed partial class AudiobookTile : UserControl
         if (e is null) return;
         var myOption = new FlyoutShowOptions
         {
-            ShowMode = FlyoutShowMode.Transient
+            ShowMode = FlyoutShowMode.Transient,
+            Position = e.GetPosition(ButtonTile)
         };
         MenuFlyout.ShowAt(ButtonTile, myOption);
     }
