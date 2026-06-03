@@ -49,31 +49,21 @@
             Grid.Row="0"
             HorizontalAlignment="Left"
             Margin="10,0,0,0">
-            <!--  title text block  -->
-            <TextBlock
-                FontSize="24"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+            <!--  title text box  -->
+            <TextBox
+                FontSize="18"
+                Header="Title"
                 Margin="0,0,0,10"
-                Style="{StaticResource BodyTextBlockStyle}"
-                TextTrimming="CharacterEllipsis"
-                TextWrapping="NoWrap"
-                ToolTipService.ToolTip="{x:Bind AudiobookViewModel.Title, Mode=OneWay}"
-                x:Name="TitleText">
-                <Run Text="{x:Bind AudiobookViewModel.Title}" />
-            </TextBlock>
+                Text="{x:Bind AudiobookViewModel.Title, Mode=OneTime}"
+                x:Name="TitleTextBox" />
 
-            <!--  author text block  -->
-            <TextBlock
+            <!--  author text box  -->
+            <TextBox
                 FontSize="14"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Style="{StaticResource BodyTextBlockStyle}"
-                TextTrimming="CharacterEllipsis"
-                TextWrapping="NoWrap"
-                ToolTipService.ToolTip="{x:Bind AudiobookViewModel.Author, Mode=OneWay}"
-                x:Name="AuthorText">
-                <Run FontWeight="Bold">Author:</Run>
-                <Run Text="{x:Bind AudiobookViewModel.Author}" />
-            </TextBlock>
+                Header="Author"
+                Margin="0,0,0,6"
+                Text="{x:Bind AudiobookViewModel.Author, Mode=OneTime}"
+                x:Name="AuthorTextBox" />
 
             <!--  Narrator text block  -->
             <TextBlock

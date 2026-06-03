@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 07/29/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Threading;
@@ -225,16 +226,17 @@ public static class DialogService
             {
                 Title = "More Info",
                 Content = moreInfoDialog,
+                PrimaryButtonText = "Save",
                 CloseButtonText = "Close",
+                DefaultButton = ContentDialogButton.Primary,
                 XamlRoot = App.Window.Content.XamlRoot,
                 RequestedTheme = ThemeHelper.ActualTheme,
                 MinWidth = moreInfoDialog.ActualWidth
             };
 
-            // todo: decide if I want to use this
-            // contentDialog.Background = (Brush)Application.Current.Resources["AcrylicBackgroundFillColorBaseBrush"];
-
-            await contentDialog.ShowOneAtATimeAsync();
+            var result = await contentDialog.ShowOneAtATimeAsync();
+            if (result == ContentDialogResult.Primary)
+                await moreInfoDialog.SaveChangesAsync();
         });
     }
 

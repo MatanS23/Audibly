@@ -90,11 +90,7 @@ public class SqlAudiobookRepository(AudiblyContext db) : IAudiobookRepository
             .Include(x => x.SourcePaths.OrderBy(source => source.Index))
             .Include(x => x.Chapters.OrderBy(chapter => chapter.Index))
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Title == audiobook.Title && a.Author == audiobook.Author);
-
-        // TODO: fix this bug
-        if (current != null && current.Id != audiobook.Id)
-            return audiobook;
+            .FirstOrDefaultAsync(a => a.Id == audiobook.Id);
 
         if (current == null)
             db.Audiobooks.Add(audiobook);
