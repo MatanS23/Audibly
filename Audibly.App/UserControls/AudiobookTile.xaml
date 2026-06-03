@@ -65,6 +65,7 @@
     <Button
         Background="Transparent"
         BorderBrush="Transparent"
+        Click="ButtonTile_OnClick"
         CornerRadius="8"
         Padding="16"
         PointerEntered="AudiobookTile_OnPointerEntered"
@@ -95,6 +96,21 @@
                     <media:AttachedCardShadow CornerRadius="{StaticResource OverlayCornerRadiusDouble}" Offset="4, 4" />
                 </winUi:Effects.Shadow>
             </Border>
+
+            <!--  Selection indicator (visible in select mode, top-right corner)  -->
+            <Grid
+                Grid.Row="0"
+                HorizontalAlignment="Right"
+                Margin="0,8,8,0"
+                VerticalAlignment="Top"
+                Visibility="{x:Bind BoolToVisibility(ViewModel.IsSelectMode), Mode=OneWay}">
+                <Ellipse Fill="White" Height="24" Opacity="0.85" Width="24" />
+                <Ellipse
+                    Fill="#60CDFF"
+                    Height="24"
+                    Visibility="{x:Bind BoolToVisibility(IsSelected), Mode=OneWay}"
+                    Width="24" />
+            </Grid>
 
             <!--  Play Button and Black Overlay  -->
             <Grid

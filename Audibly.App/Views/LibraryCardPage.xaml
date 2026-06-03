@@ -23,6 +23,7 @@
                 FilePath="{x:Bind CurrentSourceFile.FilePath, Mode=OneWay}"
                 Id="{x:Bind Id, Mode=OneWay}"
                 IsCompleted="{x:Bind IsCompleted, Mode=OneWay}"
+                IsSelected="{x:Bind IsSelected, Mode=OneWay}"
                 Progress="{x:Bind Progress, Mode=OneWay}"
                 SourcePaths="{x:Bind SourcePaths, Mode=OneWay}"
                 SourcePathsCount="{x:Bind SourcePaths.Count, Mode=OneWay}"
@@ -218,6 +219,30 @@
                             </Flyout>
                         </AppBarButton.Flyout>
                     </AppBarButton>
+
+                    <AppBarSeparator />
+
+                    <!--  select mode toggle  -->
+                    <AppBarToggleButton
+                        x:Name="SelectModeToggleButton"
+                        Click="SelectModeToggle_OnClick"
+                        IsChecked="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}"
+                        Label="Select"
+                        ToolTipService.ToolTip="Toggle multi-select mode">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8B3;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+
+                    <!--  delete selected button (visible in select mode)  -->
+                    <AppBarButton
+                        x:Name="DeleteSelectedButton"
+                        Click="DeleteSelectedButton_OnClick"
+                        Icon="Delete"
+                        IsEnabled="{x:Bind ViewModel.HasSelectedAudiobooks, Mode=OneWay}"
+                        Label="Delete Selected"
+                        ToolTipService.ToolTip="Delete selected audiobooks"
+                        Visibility="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}" />
 
                     <!--  region: debug menu  -->
                     <AppBarSeparator Visibility="{x:Bind ViewModel.ShowDebugMenu, Mode=OneWay}" x:Name="DebugMenuSeparator" />

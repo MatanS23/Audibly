@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 06/09/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -43,6 +44,7 @@ public sealed partial class AudiobookTile : UserControl
 
     private void AudiobookTile_OnPointerEntered(object sender, PointerRoutedEventArgs e)
     {
+        if (ViewModel.IsSelectMode) return;
         BlackOverlayGrid.Visibility = Visibility.Visible;
         ButtonTile.Background =
             new SolidColorBrush(ColorHelper.ToColor("#393939")); // Change background to indicate hover
@@ -91,9 +93,18 @@ public sealed partial class AudiobookTile : UserControl
         await ViewModel.DeleteAudiobookAsync();
     }
 
+    public Visibility BoolToVisibility(bool value) => value ? Visibility.Visible : Visibility.Collapsed;
+
+    private void ButtonTile_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (!ViewModel.IsSelectMode) return;
+        ViewModel.ToggleAudiobookSelection(Id);
+    }
+
     private void ButtonTile_OnRightTapped(object sender, RightTappedRoutedEventArgs? e)
     {
         if (e is null) return;
+        if (ViewModel.IsSelectMode) return;
         var myOption = new FlyoutShowOptions
         {
             ShowMode = FlyoutShowMode.Transient
@@ -261,6 +272,16 @@ public sealed partial class AudiobookTile : UserControl
     public static readonly DependencyProperty FilePathProperty =
         DependencyProperty.Register(nameof(FilePath), typeof(string), typeof(AudiobookTile),
             new PropertyMetadata(null));
+
+    public bool IsSelected
+    {
+        get => (bool)GetValue(IsSelectedProperty);
+        set => SetValue(IsSelectedProperty, value);
+    }
+
+    public static readonly DependencyProperty IsSelectedProperty =
+        DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(AudiobookTile),
+            new PropertyMetadata(false));
 
     #endregion
 }

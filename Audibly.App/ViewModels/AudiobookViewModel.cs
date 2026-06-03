@@ -1,5 +1,6 @@
 ﻿// Author: rstewa · https://github.com/rstewa
-// Updated: 02/14/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -54,6 +55,13 @@ public class AudiobookViewModel : BindableBase
     ///     Used when sync'ing with the server to reduce load and only upload the models that have changed.
     /// </remarks>
     public bool IsModified { get; set; }
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set => Set(ref _isSelected, value);
+    }
 
     // private bool _isNewAudiobook;
     //

@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 07/24/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -175,6 +176,105 @@ public class MainViewModel : BindableBase
         set => Set(ref _isLoading, value);
     }
 
+    private bool _isSelectMode;
+
+    /// <summary>
+    ///     Gets or sets whether the library is in multi-select mode.
+    /// </summary>
+    public bool IsSelectMode
+    {
+        get => _isSelectMode;
+        set
+        {
+            if (_isSelectMode == value) return;
+            _isSelectMode = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsNotSelectMode));
+            if (!value)
+            {
+                foreach (var audiobook in Audiobooks)
+                    audiobook.IsSelected = false;
+                SelectedAudiobooks.Clear();
+                HasSelectedAudiobooks = false;
+            }
+        }
+    }
+
+    public bool IsNotSelectMode => !_isSelectMode;
+
+    public HashSet<Guid> SelectedAudiobooks { get; } = [];
+
+    private bool _hasSelectedAudiobooks;
+    public bool HasSelectedAudiobooks
+    {
+        get => _hasSelectedAudiobooks;
+        private set => Set(ref _hasSelectedAudiobooks, value);
+    }
+
+    public void ToggleAudiobookSelection(Guid id)
+    {
+        var vm = Audiobooks.FirstOrDefault(a => a.Id == id);
+        if (vm == null) return;
+        if (SelectedAudiobooks.Contains(id))
+        {
+            SelectedAudiobooks.Remove(id);
+            vm.IsSelected = false;
+        }
+        else
+        {
+            SelectedAudiobooks.Add(id);
+            vm.IsSelected = true;
+        }
+        HasSelectedAudiobooks = SelectedAudiobooks.Count > 0;
+    }
+
+    /// <summary>
+    ///     Deletes all currently selected audiobooks with a confirmation dialog.
+    /// </summary>
+    public async Task DeleteSelectedAudiobooksAsync()
+    {
+        try
+        {
+            var toDelete = Audiobooks.Where(a => SelectedAudiobooks.Contains(a.Id)).ToList();
+            if (!toDelete.Any()) return;
+
+            var confirmed = await DialogService.ShowConfirmationDialogAsync(
+                "Delete Audiobooks",
+                $"Are you sure you want to delete {toDelete.Count} audiobook(s)?",
+                "Delete", "Cancel");
+
+            if (confirmed != ContentDialogResult.Primary) return;
+
+            foreach (var audiobook in toDelete)
+            {
+                if (audiobook == App.PlayerViewModel.NowPlaying)
+                    _dispatcherQueue.TryEnqueue(() =>
+                    {
+                        App.PlayerViewModel.MediaPlayer.Pause();
+                        App.PlayerViewModel.NowPlaying.IsNowPlaying = false;
+                        App.PlayerViewModel.NowPlaying = null;
+                    });
+
+                await App.Repository.Audiobooks.DeleteAsync(audiobook.Id);
+                await App.ViewModel.AppDataService.DeleteCoverImageAsync(audiobook.CoverImagePath);
+            }
+
+            var count = toDelete.Count;
+            IsSelectMode = false;
+            await GetAudiobookListAsync();
+
+            EnqueueNotification(new Notification
+            {
+                Message = $"{count} audiobook(s) deleted successfully!",
+                Severity = InfoBarSeverity.Success
+            });
+        }
+        catch (Exception ex)
+        {
+            LoggingService.LogError(ex, true);
+            await DialogService.ShowErrorDialogAsync("Failed to delete audiobooks", ex.Message);
+        }
+    }
     /// <summary>
     ///     Gets or sets a value indicating whether the app is currently importing audiobooks.
     /// </summary>
