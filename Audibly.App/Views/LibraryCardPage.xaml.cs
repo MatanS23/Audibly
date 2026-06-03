@@ -53,6 +53,7 @@ public sealed partial class LibraryCardPage : Page
 
     private readonly HashSet<AudioBookFilter> _activeFilters = new();
     private readonly DispatcherQueue _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+    private bool _restoringFilters;
 
     public LibraryCardPage()
     {
@@ -96,33 +97,33 @@ public sealed partial class LibraryCardPage : Page
 
             UserSettings.NeedToImportAudiblyExport = false;
             UserSettings.ShowDataMigrationFailedDialog = false;
-
-            return;
         }
 
         // check if we need to import the user's data from the old database
-        if (!UserSettings.NeedToImportAudiblyExport) return;
-
-        // let the user know that we need to migrate their data into the new database
-        // todo: probably do not need this try/catch block but leaving it here for now
-        try
+        else if (UserSettings.NeedToImportAudiblyExport)
         {
-            await DialogService.ShowDataMigrationRequiredDialogAsync();
-        }
-        catch (Exception exception)
-        {
-            UserSettings.NeedToImportAudiblyExport = false;
-            UserSettings.ShowDataMigrationFailedDialog = false;
 
-            // log the error
-            ViewModel.LoggingService.LogError(exception, true);
-
-            // notify user that we failed to import their audiobooks
-            ViewModel.EnqueueNotification(new Notification
+            // let the user know that we need to migrate their data into the new database
+            // todo: probably do not need this try/catch block but leaving it here for now
+            try
             {
-                Message = "Data Migration Failed",
-                Severity = InfoBarSeverity.Error
-            });
+                await DialogService.ShowDataMigrationRequiredDialogAsync();
+            }
+            catch (Exception exception)
+            {
+                UserSettings.NeedToImportAudiblyExport = false;
+                UserSettings.ShowDataMigrationFailedDialog = false;
+
+                // log the error
+                ViewModel.LoggingService.LogError(exception, true);
+
+                // notify user that we failed to import their audiobooks
+                ViewModel.EnqueueNotification(new Notification
+                {
+                    Message = "Data Migration Failed",
+                    Severity = InfoBarSeverity.Error
+                });
+            }
         }
     }
 
@@ -228,6 +229,7 @@ public sealed partial class LibraryCardPage : Page
 
     private async void InProgressFilterCheckBox_OnChecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
 
         _activeFilters.Add(AudioBookFilter.InProgress);
@@ -237,46 +239,41 @@ public sealed partial class LibraryCardPage : Page
 
     private async void NotStartedFilterCheckBox_OnChecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Add(AudioBookFilter.NotStarted);
-
         await FilterAudiobookList();
     }
 
     private async void CompletedFilterCheckBox_OnChecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Add(AudioBookFilter.Completed);
-
         await FilterAudiobookList();
     }
 
     private async void InProgressFilterCheckBox_OnUnchecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Remove(AudioBookFilter.InProgress);
-
         await FilterAudiobookList();
     }
 
     private async void NotStartedFilterCheckBox_OnUnchecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Remove(AudioBookFilter.NotStarted);
-
         await FilterAudiobookList();
     }
 
     private async void CompletedFilterCheckBox_OnUnchecked(object sender, RoutedEventArgs e)
     {
+        if (_restoringFilters) return;
         SetCheckedState();
-
         _activeFilters.Remove(AudioBookFilter.Completed);
-
         await FilterAudiobookList();
     }
 

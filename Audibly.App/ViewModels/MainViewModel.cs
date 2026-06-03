@@ -107,11 +107,11 @@ public class MainViewModel : BindableBase
     /// </summary>
     public ObservableCollection<string> Authors { get; } = [];
 
-    private string? _activeAuthorFilter;
+    private string? _activeAuthorFilter = UserSettings.ActiveAuthorFilter;
 
     /// <summary>
     ///     When set, the library is filtered to show only books by this author.
-    ///     Setting to null restores all books.
+    ///     Setting to null restores all books. Persisted across sessions.
     /// </summary>
     public string? ActiveAuthorFilter
     {
@@ -120,6 +120,7 @@ public class MainViewModel : BindableBase
         {
             if (_activeAuthorFilter == value) return;
             _activeAuthorFilter = value;
+            UserSettings.ActiveAuthorFilter = value;
             OnPropertyChanged();
             AuthorFilterChanged?.Invoke();
         }
@@ -279,8 +280,6 @@ public class MainViewModel : BindableBase
     {
         try
         {
-            ResetFilters?.Invoke();
-
             await _dispatcherQueue.EnqueueAsync(() => IsLoading = true);
 
             var audiobooks = (await App.Repository.Audiobooks.GetAsync()).AsList();
@@ -309,7 +308,7 @@ public class MainViewModel : BindableBase
 
                 // if the active author no longer exists after reload, clear it silently
                 if (_activeAuthorFilter != null && !Authors.Contains(_activeAuthorFilter))
-                    _activeAuthorFilter = null;
+                    ActiveAuthorFilter = null;
 
                 // re-apply author filter on top of the full sorted list
                 if (_activeAuthorFilter != null)

@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 05/08/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Text.Json;
@@ -172,6 +173,19 @@ public static class UserSettings
             }
         }
         set => ApplicationData.Current.LocalSettings.Values["IsSidebarCollapsed"] = value;
+    }
+
+    /// <summary>
+    ///     The author name currently selected in the sidebar filter, or null if "All Books" is active.
+    /// </summary>
+    public static string? ActiveAuthorFilter
+    {
+        get
+        {
+            var val = ApplicationData.Current.LocalSettings.Values["ActiveAuthorFilter"]?.ToString();
+            return string.IsNullOrEmpty(val) ? null : val;
+        }
+        set => ApplicationData.Current.LocalSettings.Values["ActiveAuthorFilter"] = value ?? string.Empty;
     }
 
     /// <summary>
