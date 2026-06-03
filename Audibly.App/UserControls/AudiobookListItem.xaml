@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="Audibly.App.UserControls.AudiobookListItem"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <MenuFlyout
+            Closed="MenuFlyout_Closed"
+            Placement="RightEdgeAlignedTop"
+            x:Name="MenuFlyout">
+            <MenuFlyoutItem Click="PlayButton_Click" Icon="Play" Text="Play" />
+            <MenuFlyoutItem Click="DeleteAudiobook_OnClick" Icon="Delete" Text="Delete" />
+            <MenuFlyoutItem Click="ShowInFileExplorer_OnClick" Text="Show in File Explorer">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xEC50;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Click="OpenInAppFolder_OnClick" Text="Open in App Folder">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8E5;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Click="MoreInfo_OnClick" Text="More Info">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE946;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem
+                Click="MarkAsCompleted_OnClick"
+                Text="Mark as Completed"
+                x:Name="MarkAsCompletedButton">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE73E;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem
+                Click="MarkAsIncomplete_OnClick"
+                Text="Mark as Incomplete"
+                Visibility="Collapsed"
+                x:Name="MarkAsIncompleteButton">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE894;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Click="ExportMetadataToJson_OnClick" Text="Export Metadata to JSON">
+                <MenuFlyoutItem.Icon>
+                    <FontIcon Glyph="&#xE8B5;" />
+                </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+        </MenuFlyout>
+    </UserControl.Resources>
+
+    <Button
+        x:Name="ButtonTile"
+        Background="Transparent"
+        BorderBrush="Transparent"
+        CornerRadius="8"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Stretch"
+        Padding="8,4"
+        PointerEntered="AudiobookListItem_OnPointerEntered"
+        PointerExited="AudiobookListItem_OnPointerExited"
+        RightTapped="ButtonTile_OnRightTapped">
+        <Grid ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="64" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!--  thumbnail with play overlay  -->
+            <Grid Grid.Column="0" Width="64" Height="64">
+                <Image Source="ms-appx:///Assets/DefaultCoverImage.png" Stretch="UniformToFill" />
+                <ContentPresenter
+                    Content="{x:Bind Source, Mode=OneWay}"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center" />
+                <Grid x:Name="PlayOverlayGrid" Visibility="Collapsed">
+                    <Grid.Resources>
+                        <SolidColorBrush x:Key="ButtonBackground">Transparent</SolidColorBrush>
+                        <SolidColorBrush x:Key="ButtonBackgroundPointerOver">Transparent</SolidColorBrush>
+                        <SolidColorBrush x:Key="ButtonBackgroundPressed">Transparent</SolidColorBrush>
+                        <SolidColorBrush x:Key="ButtonBackgroundDisabled">Transparent</SolidColorBrush>
+                    </Grid.Resources>
+                    <Grid Background="Black" CornerRadius="4" Opacity="0.55" />
+                    <Button
+                        x:Name="PlayPauseButton"
+                        BorderThickness="0"
+                        Click="PlayButton_Click"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                        <FontIcon FontSize="20" Glyph="&#xF5B0;" />
+                    </Button>
+                </Grid>
+            </Grid>
+
+            <!--  title, author, progress  -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                <TextBlock
+                    FontWeight="SemiBold"
+                    Text="{x:Bind Title, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind Author, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ProgressBar
+                        Grid.Column="0"
+                        Maximum="100"
+                        VerticalAlignment="Center"
+                        Value="{x:Bind Progress, Mode=OneWay}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        FontSize="11"
+                        Margin="6,0,0,0"
+                        Opacity="0.6"
+                        Text="{x:Bind FormatProgress(Progress), Mode=OneWay}"
+                        VerticalAlignment="Center" />
+                </Grid>
+            </StackPanel>
+        </Grid>
+    </Button>
+</UserControl>

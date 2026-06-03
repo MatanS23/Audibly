@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 03/11/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -74,6 +75,11 @@ public sealed partial class LibraryCardPage : Page
     private void ViewModelOnResetFilters()
     {
         SelectAllFiltersCheckBox.IsChecked = false;
+    }
+
+    private void ViewToggleButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.IsGridView = !ViewModel.IsGridView;
     }
 
     private async void LibraryCardPage_Loaded(object sender, RoutedEventArgs e)

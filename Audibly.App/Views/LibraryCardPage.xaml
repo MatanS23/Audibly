@@ -17,6 +17,8 @@
 
     <Page.Resources>
         <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
+        
+        <!--  existing grid/card template - unchanged  -->
         <DataTemplate x:DataType="viewModels:AudiobookViewModel" x:Key="AudiobookTemplate">
             <userControls:AudiobookTile
                 Author="{x:Bind Author, Mode=OneWay}"
@@ -31,6 +33,23 @@
                     <Image Source="{x:Bind ThumbnailPath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="Uniform" />
                 </userControls:AudiobookTile.Source>
             </userControls:AudiobookTile>
+        </DataTemplate>
+
+        <!--  new list template  -->
+        <DataTemplate x:DataType="viewModels:AudiobookViewModel" x:Key="AudiobookListTemplate">
+            <userControls:AudiobookListItem
+                Author="{x:Bind Author, Mode=OneWay}"
+                FilePath="{x:Bind CurrentSourceFile.FilePath, Mode=OneWay}"
+                Id="{x:Bind Id, Mode=OneWay}"
+                IsCompleted="{x:Bind IsCompleted, Mode=OneWay}"
+                Progress="{x:Bind Progress, Mode=OneWay}"
+                SourcePaths="{x:Bind SourcePaths, Mode=OneWay}"
+                SourcePathsCount="{x:Bind SourcePaths.Count, Mode=OneWay}"
+                Title="{x:Bind Title, Mode=OneWay}">
+                <userControls:AudiobookListItem.Source>
+                    <Image Source="{x:Bind ThumbnailPath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="Uniform" />
+                </userControls:AudiobookListItem.Source>
+            </userControls:AudiobookListItem>
         </DataTemplate>
     </Page.Resources>
 
@@ -203,11 +222,24 @@
                     </AppBarButton>
                     <AppBarSeparator />
 
+                    <!--  view toggle  -->
+                    <AppBarToggleButton
+                        x:Name="ViewToggleButton"
+                        IsChecked="{x:Bind ViewModel.IsListView, Mode=OneWay}"
+                        Click="ViewToggleButton_OnClick"
+                        Label="List View"
+                        ToolTipService.ToolTip="Toggle list/grid view">
+                        <AppBarToggleButton.Icon>
+                            <FontIcon Glyph="&#xE8FD;" />
+                        </AppBarToggleButton.Icon>
+                    </AppBarToggleButton>
+
                     <!--  zoom drop down button  -->
                     <AppBarButton
                         Icon="Zoom"
                         Label="Zoom"
                         ToolTipService.ToolTip="Zoom"
+                        Visibility="{x:Bind ViewModel.IsGridView, Mode=OneWay}"
                         x:Name="ZoomButton">
                         <AppBarButton.Flyout>
                             <Flyout Placement="BottomEdgeAlignedLeft" x:Name="ZoomFlyout">
@@ -322,30 +354,45 @@
         </StackPanel>
 
         <!--  library card view  -->
-        <ScrollViewer
-            IsVerticalScrollChainingEnabled="False"
-            Padding="0,8,0,8"
+        <GridView
+            x:Name="LibraryCardScrollView"
+            IsItemClickEnabled="False"
+            ItemTemplate="{StaticResource AudiobookTemplate}"
+            ItemsSource="{x:Bind ViewModel.Audiobooks, Mode=OneWay}"
+            Padding="0,8,0,208"
             RelativePanel.AlignBottomWithPanel="True"
             RelativePanel.AlignLeftWithPanel="True"
             RelativePanel.AlignRightWithPanel="True"
             RelativePanel.Below="TitleAndCommandBarPanel"
-            x:Name="LibraryCardScrollView">
-            <StackPanel Orientation="Vertical">
-                <ItemsRepeater
-                    ItemTemplate="{StaticResource AudiobookTemplate}"
-                    ItemsSource="{x:Bind ViewModel.Audiobooks, Mode=OneWay}"
-                    x:Name="LibraryCardView">
-                    <ItemsRepeater.Layout>
-                        <UniformGridLayout
-                            ItemsJustification="Start"
-                            ItemsStretch="Uniform"
-                            MinColumnSpacing="4"
-                            MinRowSpacing="12" />
-                    </ItemsRepeater.Layout>
-                </ItemsRepeater>
-                <Rectangle Height="200" Opacity="0" />
-            </StackPanel>
-        </ScrollViewer>
+            SelectionMode="None"
+            Visibility="{x:Bind ViewModel.IsGridView, Mode=OneWay}">
+            <GridView.ItemContainerStyle>
+                <Style TargetType="GridViewItem">
+                    <Setter Property="Margin" Value="2,6,2,6" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                </Style>
+            </GridView.ItemContainerStyle>
+            <GridView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsWrapGrid Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </GridView.ItemsPanel>
+        </GridView>
+
+        <!--  library list view  -->
+        <ListView
+            x:Name="LibraryListView"
+            ItemTemplate="{StaticResource AudiobookListTemplate}"
+            ItemsSource="{x:Bind ViewModel.Audiobooks, Mode=OneWay}"
+            Padding="0,8,0,208"
+            RelativePanel.AlignBottomWithPanel="True"
+            RelativePanel.AlignLeftWithPanel="True"
+            RelativePanel.AlignRightWithPanel="True"
+            RelativePanel.Below="TitleAndCommandBarPanel"
+            SelectionMode="None"
+            Visibility="{x:Bind ViewModel.IsListView, Mode=OneWay}" />
 
         <!--  progress bar for when library view is loading  -->
         <userControls:ProgressBarCard
@@ -368,6 +415,7 @@
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
                         <Setter Target="LibraryCardScrollView.Visibility" Value="Collapsed" />
+                        <Setter Target="LibraryListView.Visibility" Value="Collapsed" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>

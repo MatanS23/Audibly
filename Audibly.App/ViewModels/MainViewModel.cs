@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 07/24/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Collections.Generic;
@@ -174,6 +175,26 @@ public class MainViewModel : BindableBase
         get => _isLoading;
         set => Set(ref _isLoading, value);
     }
+
+    private bool _isGridView = UserSettings.IsGridView;
+
+    /// <summary>
+    ///     Gets or sets whether the library is displayed as a grid (true) or list (false).
+    /// </summary>
+    public bool IsGridView
+    {
+        get => _isGridView;
+        set
+        {
+            if (_isGridView == value) return;
+            _isGridView = value;
+            UserSettings.IsGridView = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsListView));
+        }
+    }
+
+    public bool IsListView => !_isGridView;
 
     /// <summary>
     ///     Gets or sets a value indicating whether the app is currently importing audiobooks.

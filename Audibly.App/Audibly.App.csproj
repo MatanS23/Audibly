@@ -50,6 +50,7 @@
 
 
     <ItemGroup>
+        <None Remove="UserControls\AudiobookListItem.xaml" />
         <None Remove="UserControls\CoverImageTile.xaml" />
         <None Remove="UserControls\CustomTimerPopup.xaml" />
         <None Remove="UserControls\NowPlayingBar.xaml" />
@@ -106,7 +107,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AutoMapper" Version="14.0.0"/>
+        <PackageReference Include="AutoMapper" Version="14.0.0" />
         <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" Version="0.1.250206-build.2040" />
         <PackageReference Include="CommunityToolkit.Labs.WinUI.MarqueeText" Version="0.1.250206-build.2040" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -194,6 +195,11 @@
             <AutoGen>True</AutoGen>
             <DependentUpon>Changelog.resx</DependentUpon>
         </Compile>
+    </ItemGroup>
+    <ItemGroup>
+      <Page Update="UserControls\AudiobookListItem.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
     <ItemGroup>
         <Page Update="UserControls\CustomTimerPopup.xaml">
