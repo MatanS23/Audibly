@@ -1,5 +1,6 @@
 // Author: rstewa · https://github.com/rstewa
-// Updated: 05/08/2025
+// Updated: 06/03/2026
+// Updated by: MatanS23
 
 using System;
 using System.Text.Json;
@@ -200,5 +201,30 @@ public static class UserSettings
         }
         set => ApplicationData.Current.LocalSettings.Values["WatchedFolderTokens"] =
             JsonSerializer.Serialize(value);
+    }
+    /// <summary>
+    ///     Whether the chapter time label shows remaining time (true) or total duration (false).
+    /// </summary>
+    public static bool ShowChapterTimeRemaining
+    {
+        get
+        {
+            try
+            {
+                var val = ApplicationData.Current.LocalSettings.Values["ShowChapterTimeRemaining"];
+                if (val != null)
+                    if (bool.TryParse(val.ToString(), out var result))
+                        return result;
+
+                ApplicationData.Current.LocalSettings.Values["ShowChapterTimeRemaining"] = false;
+                return false;
+            }
+            catch (Exception e)
+            {
+                SentrySdk.CaptureException(e);
+                return false;
+            }
+        }
+        set => ApplicationData.Current.LocalSettings.Values["ShowChapterTimeRemaining"] = value;
     }
 }
